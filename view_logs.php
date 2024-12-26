@@ -62,10 +62,12 @@ $logs = $result->fetch_all(MYSQLI_ASSOC);
             <div class="alert alert-warning text-center">No activity logs found.</div>
         <?php endif; ?>
         <div class="text-end mb-3">
-            <form method="post" action="export_activity_logs.php">
+            <form method="get" action="export.php">
+                <input type="hidden" name="type" value="activity_logs">
                 <button type="submit" class="btn btn-success">Export Activity Logs</button>
             </form>
         </div>
+
         <div class="text-center mt-4">
             <a href="dashboard.php" class="btn btn-secondary">Back to Dashboard</a>
         </div>

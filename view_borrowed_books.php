@@ -27,52 +27,61 @@ $borrowed_books = $result->fetch_all(MYSQLI_ASSOC);
 
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Borrowed Books</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    </head>
-    <body class="bg-light">
-        <div class="container my-5">
-            <h2 class="text-center mb-4">Borrowed Books</h2>
 
-            <?php if (!empty($borrowed_books)): ?>
-                <table class="table table-bordered table-hover">
-                    <thead class="table-light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Borrowed Books</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+    <div class="container my-5">
+        <h2 class="text-center mb-4">Borrowed Books</h2>
+
+        <?php if (!empty($borrowed_books)): ?>
+            <table class="table table-bordered table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Book Title</th>
+                        <th>Author</th>
+                        <th>Barcode</th>
+                        <th>Register Number</th>
+                        <th>Student Name</th>
+                        <th>Borrow Date</th>
+                        <th>Due Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($borrowed_books as $book): ?>
                         <tr>
-                            <th>Book Title</th>
-                            <th>Author</th>
-                            <th>Barcode</th>
-                            <th>Register Number</th>
-                            <th>Student Name</th>
-                            <th>Borrow Date</th>
-                            <th>Due Date</th>
+                            <td><?php echo $book['title']; ?></td>
+                            <td><?php echo $book['author']; ?></td>
+                            <td><?php echo $book['barcode']; ?></td>
+                            <td><?php echo $book['register_number']; ?></td>
+                            <td><?php echo $book['student_name']; ?></td>
+                            <td><?php echo $book['borrow_date']; ?></td>
+                            <td><?php echo $book['due_date']; ?></td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($borrowed_books as $book): ?>
-                            <tr>
-                                <td><?php echo $book['title']; ?></td>
-                                <td><?php echo $book['author']; ?></td>
-                                <td><?php echo $book['barcode']; ?></td>
-                                <td><?php echo $book['register_number']; ?></td>
-                                <td><?php echo $book['student_name']; ?></td>
-                                <td><?php echo $book['borrow_date']; ?></td>
-                                <td><?php echo $book['due_date']; ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            <?php else: ?>
-                <div class="alert alert-warning text-center">No books are currently borrowed.</div>
-            <?php endif; ?>
-
-            <div class="text-center mt-4">
-                <a href="dashboard.php" class="btn btn-secondary">Back to Dashboard</a>
-            </div>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php else: ?>
+            <div class="alert alert-warning text-center">No books are currently borrowed.</div>
+        <?php endif; ?>
+        <div class="text-end mb-3">
+            <form method="get" action="export.php">
+                <input type="hidden" name="type" value="borrowed_books">
+                <button type="submit" class="btn btn-success">Export Borrowed Books</button>
+            </form>
         </div>
-    </body>
+
+        <div class="text-center mt-4">
+            <a href="dashboard.php" class="btn btn-secondary">Back to Dashboard</a>
+        </div>
+    </div>
+</body>
+
 </html>
 
 <?php include 'footer.php'; ?>

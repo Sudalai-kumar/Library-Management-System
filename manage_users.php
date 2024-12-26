@@ -163,7 +163,8 @@ $users = $result->fetch_all(MYSQLI_ASSOC);
             </tbody>
         </table>
         <div class="text-end mb-3">
-            <form method="post" action="export_users.php">
+            <form method="get" action="export.php">
+                <input type="hidden" name="type" value="users">
                 <button type="submit" class="btn btn-success">Export Users</button>
             </form>
         </div>

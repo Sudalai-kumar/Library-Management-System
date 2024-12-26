@@ -86,11 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         <!-- Message Section -->
         <div class="mt-4"><?php echo $message; ?></div>
-        <div class="text-end mb-3">
-            <form method="post" action="export_borrowed_books.php">
-                <button type="submit" class="btn btn-success">Export Borrowed Books</button>
-            </form>
-        </div>
+        
         <div class="text-center mt-4">
             <a href="dashboard.php" class="btn btn-secondary">Back to Dashboard</a>
         </div>

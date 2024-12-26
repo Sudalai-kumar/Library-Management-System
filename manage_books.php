@@ -152,7 +152,8 @@ if ($result->num_rows > 0) {
             </tbody>
         </table>
         <div class="text-end mb-3">
-            <form method="post" action="export_books.php">
+            <form method="get" action="export.php">
+                <input type="hidden" name="type" value="books">
                 <button type="submit" class="btn btn-success">Export Books</button>
             </form>
         </div>

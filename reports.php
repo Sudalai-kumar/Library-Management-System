@@ -88,6 +88,12 @@ $monthly_borrow_counts = json_encode(array_column($monthly_activity, 'borrow_cou
                     </div>
                 </div>
             </div>
+            <div class="text-end mb-3">
+                <form method="get" action="export.php">
+                    <input type="hidden" name="type" value="reports_popular_books">
+                    <button type="submit" class="btn btn-success">Export Popular Books</button>
+                </form>
+            </div>
 
             <!-- Frequent Borrowers -->
             <div class="col-md-6">
@@ -108,6 +114,12 @@ $monthly_borrow_counts = json_encode(array_column($monthly_activity, 'borrow_cou
                         </ul>
                     </div>
                 </div>
+            </div>
+            <div class="text-end mb-3">
+                <form method="get" action="export.php">
+                    <input type="hidden" name="type" value="reports_frequent_borrowers">
+                    <button type="submit" class="btn btn-success">Export Frequent Borrowers</button>
+                </form>
             </div>
 
             <!-- Monthly Activity -->
@@ -130,10 +142,18 @@ $monthly_borrow_counts = json_encode(array_column($monthly_activity, 'borrow_cou
                 </div>
             </div>
         </div>
-
-        <div class="text-center mt-5">
-            <a href="dashboard.php" class="btn btn-secondary">Back to Dashboard</a>
+        <div class="text-end mb-3">
+            <form method="get" action="export.php">
+                <input type="hidden" name="type" value="reports_monthly_activity">
+                <button type="submit" class="btn btn-success">Export Monthly Activity</button>
+            </form>
         </div>
+    </div>
+
+
+    <div class="text-center mt-5">
+        <a href="dashboard.php" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
     </div>
 
     <!-- Chart.js Scripts -->
