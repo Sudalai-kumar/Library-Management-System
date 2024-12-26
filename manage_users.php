@@ -162,7 +162,11 @@ $users = $result->fetch_all(MYSQLI_ASSOC);
                 <?php endforeach; ?>
             </tbody>
         </table>
-
+        <div class="text-end mb-3">
+            <form method="post" action="export_users.php">
+                <button type="submit" class="btn btn-success">Export Users</button>
+            </form>
+        </div>
         <div class="text-center mt-4">
             <a href="dashboard.php" class="btn btn-secondary">Back to Dashboard</a>
         </div>

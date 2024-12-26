@@ -20,6 +20,7 @@ $sql_popular_books = "
 SELECT b.title, b.author, COUNT(bb.id) AS borrow_count
 FROM borrowed_books bb
 JOIN books b ON bb.book_id = b.id
+WHERE b.is_removed = 0
 GROUP BY bb.book_id
 ORDER BY borrow_count DESC
 LIMIT 10";

@@ -19,7 +19,7 @@
 <body class="bg-light">
     <div class="container d-flex justify-content-center align-items-center vh-100">
         <div class="card shadow-lg p-4" style="width: 100%; max-width: 400px;">
-            <h2 class="text-center mb-4">Library Management System</h2>
+        <h2 class="text-center mb-4">Library Management System</h2>
             <form method="post" action="">
                 <div class="mb-3">
                     <label for="email" class="form-label">Email:</label>

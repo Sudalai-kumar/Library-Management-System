@@ -46,6 +46,7 @@ $total_fines = $conn->query($sql_total_fines)->fetch_assoc()['total_fines'];
 
 <body>
     <div class="container my-5">
+        <h2 class="text-center mb-4"> SANKAR POLYTECHNIC COLLEGE</h2>
         <h2 class="text-center mb-4">Welcome to the Library Management System</h2>
         <p class="text-center">Role: <strong><?php echo ucfirst($role); ?></strong></p>
 

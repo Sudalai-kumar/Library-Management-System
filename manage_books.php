@@ -30,6 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_book'])) {
 
 // Handle Import Books
 require 'vendor/autoload.php';
+
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['import_books'])) {
@@ -73,12 +74,14 @@ if ($result->num_rows > 0) {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Books</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
+
 <body class="bg-light">
     <div class="container my-5">
         <h2 class="text-center mb-4">Manage Books</h2>
@@ -148,12 +151,17 @@ if ($result->num_rows > 0) {
                 <?php endforeach; ?>
             </tbody>
         </table>
-
+        <div class="text-end mb-3">
+            <form method="post" action="export_books.php">
+                <button type="submit" class="btn btn-success">Export Books</button>
+            </form>
+        </div>
         <div class="text-center mt-4">
             <a href="dashboard.php" class="btn btn-secondary">Back to Dashboard</a>
         </div>
     </div>
 </body>
+
 </html>
 
 <?php include 'footer.php'; ?>

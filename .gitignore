@@ -1,0 +1,15 @@
+# Ignore vendor directory if you're using Composer
+vendor/
+
+# Ignore sensitive configuration files
+*.env
+config.php
+
+# Ignore system files
+*.log
+*.bak
+.DS_Store
+
+# Ignore IDE settings
+.vscode/
+.idea/
