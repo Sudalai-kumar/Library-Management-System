@@ -74,7 +74,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['import_users'])) {
     }
 }
 
-
 // Handle deleting a user
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_user'])) {
     $user_id = $_POST['user_id'];

@@ -17,16 +17,26 @@ if ($conn->connect_error) {
 // Fetch user details
 $user_id = $_SESSION['user_id'];
 $role = ucfirst($_SESSION['role']);
+$sql_overdue = "SELECT b.title, bb.due_date 
+                FROM borrowed_books bb
+                JOIN books b ON bb.book_id = b.id
+                WHERE bb.student_id = '$user_id' 
+                AND bb.return_date IS NULL 
+                AND bb.due_date < CURDATE()";
+$result_overdue = $conn->query($sql_overdue);
+$overdue_books = $result_overdue->fetch_all(MYSQLI_ASSOC);
 
 // Optional: Fetch user-specific data like borrowed books
-$sql = "SELECT b.title, b.author, bb.borrow_date, bb.due_date, 
+$sql = "SELECT b.title, b.author, bb.borrow_date, bb.due_date, bb.return_date, 
         CASE 
+            WHEN bb.return_date IS NOT NULL THEN 'Returned'
             WHEN bb.due_date < CURDATE() THEN 'Overdue'
-            ELSE 'Borrowed'
+            ELSE 'Currently Borrowed'
         END AS status
         FROM borrowed_books bb
         JOIN books b ON bb.book_id = b.id
-        WHERE bb.student_id = '$user_id' AND bb.return_date IS NULL";
+        WHERE bb.student_id = '$user_id'
+        ORDER BY bb.borrow_date DESC";
 $result = $conn->query($sql);
 $borrowed_books = $result->fetch_all(MYSQLI_ASSOC);
 
@@ -53,7 +63,25 @@ $borrowed_books = $result->fetch_all(MYSQLI_ASSOC);
             <a class="nav-link" href="profile.php">Profile</a>
             <a class="nav-link text-danger" href="logout.php">Logout</a>
         </nav>
-
+        <div class="card shadow mb-4">
+            <div class="card-header bg-danger text-white">
+                <h5>Overdue Notifications</h5>
+            </div>
+            <div class="card-body">
+                <?php if (!empty($overdue_books)): ?>
+                    <ul>
+                        <?php foreach ($overdue_books as $book): ?>
+                            <li>
+                                <strong><?php echo $book['title']; ?></strong> was due on
+                                <span class="text-danger"><?php echo $book['due_date']; ?></span>.
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php else: ?>
+                    <p class="text-muted">No overdue books at the moment.</p>
+                <?php endif; ?>
+            </div>
+        </div>
         <!-- Borrowed Books Section -->
         <div class="card shadow mb-4">
             <div class="card-header bg-primary text-white">
@@ -61,32 +89,33 @@ $borrowed_books = $result->fetch_all(MYSQLI_ASSOC);
             </div>
             <div class="card-body">
                 <?php if (!empty($borrowed_books)): ?>
-                    <table class="table table-bordered">
-                        <thead>
+                    <table class="table table-bordered table-hover">
+                        <thead class="table-light">
                             <tr>
                                 <th>Title</th>
                                 <th>Author</th>
                                 <th>Borrow Date</th>
                                 <th>Due Date</th>
+                                <th>Return Date</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($borrowed_books as $book): ?>
-                                <tr>
+                                <tr class="<?php
+                                            echo $book['status'] === 'Returned' ? 'table-success' : ($book['status'] === 'Overdue' ? 'table-danger' : 'table-warning'); ?>">
                                     <td><?php echo $book['title']; ?></td>
                                     <td><?php echo $book['author']; ?></td>
                                     <td><?php echo $book['borrow_date']; ?></td>
                                     <td><?php echo $book['due_date']; ?></td>
-                                    <td class="<?php echo $book['status'] === 'Overdue' ? 'text-danger' : 'text-warning'; ?>">
-                                        <?php echo $book['status']; ?>
-                                    </td>
+                                    <td><?php echo $book['return_date'] ?? 'N/A'; ?></td>
+                                    <td><?php echo $book['status']; ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
                     </table>
                 <?php else: ?>
-                    <p class="text-muted">No books currently borrowed.</p>
+                    <p class="text-muted">No books borrowed yet.</p>
                 <?php endif; ?>
             </div>
         </div>
