@@ -38,6 +38,8 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 
 // Handle importing users
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['import_users'])) {
+    $selected_role = $conn->real_escape_string($_POST['role']); // Get the selected role
+
     if (isset($_FILES['excel_file']['tmp_name']) && $_FILES['excel_file']['tmp_name'] != '') {
         $file = $_FILES['excel_file']['tmp_name'];
         try {
@@ -45,23 +47,33 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['import_users'])) {
             $sheetData = $spreadsheet->getActiveSheet()->toArray();
 
             foreach ($sheetData as $index => $row) {
-                if ($index == 0 || empty($row[0]) || empty($row[1]) || empty($row[2])) continue; // Skip headers or incomplete rows
-                $name = $conn->real_escape_string($row[0]);
-                $email = $conn->real_escape_string($row[1]);
-                $password = password_hash($row[2], PASSWORD_DEFAULT); // Automatically hash password
-                $register_number = $conn->real_escape_string($row[3]); // Assuming Register Number is in the 4th column
-                $role = 'student'; // Role is fixed as 'student' for imports
+                if ($index == 0) continue; // Skip header row
 
-                $conn->query("INSERT INTO users (name, email, register_number, role, password)VALUES ('$name', '$email', '$register_number', '$role', '$password')");
+                // Skip rows with missing required fields
+                if (empty($row[0]) || empty($row[1]) || empty($row[2]) || empty($row[3])) {
+                    continue;
+                }
+
+                // Extract and sanitize row data
+                $register_number = $conn->real_escape_string($row[0]);
+                $name = $conn->real_escape_string($row[1]);
+                $email = $conn->real_escape_string($row[2]);
+                $password = password_hash($row[3], PASSWORD_DEFAULT);
+
+                // Insert into the database with the selected role
+                $sql = "INSERT INTO users (register_number, name, email, role, password) 
+                        VALUES ('$register_number', '$name', '$email', '$selected_role', '$password')";
+                $conn->query($sql);
             }
             $message = "Users imported successfully!";
         } catch (Exception $e) {
-            $message = "Error importing users: " . $e->getMessage();
+            $message = "Error: Unable to import users. " . $e->getMessage();
         }
     } else {
         $message = "No file selected.";
     }
 }
+
 
 // Handle deleting a user
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_user'])) {
@@ -125,14 +137,21 @@ $users = $result->fetch_all(MYSQLI_ASSOC);
         </form>
 
         <!-- Import Users -->
-        <h3>Import Users (Students Only)</h3>
-        <form method="post" action="" enctype="multipart/form-data" class="mb-4">
-            <div class="input-group">
-                <input type="file" name="excel_file" class="form-control" accept=".xlsx, .xls" required>
+        <h3>Import Users</h3>
+        <form method="post" action="" enctype="multipart/form-data">
+            <h5>Import Users</h5>
+            <label>Select Role:</label>
+            <div>
+                <input type="radio" id="student" name="role" value="student" required>
+                <label for="student">Student</label>
+                <input type="radio" id="faculty" name="role" value="faculty" required>
+                <label for="faculty">Faculty</label>
+            </div>
+            <div class="mt-3">
+                <input type="file" name="excel_file" accept=".xlsx, .xls" required>
                 <button type="submit" name="import_users" class="btn btn-success">Import Users</button>
             </div>
         </form>
-
         <!-- Current Users -->
         <h3>All Users</h3>
         <table class="table table-bordered table-hover">

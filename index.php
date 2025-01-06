@@ -48,7 +48,17 @@
                             if (password_verify($password, $user['password'])) {
                                 $_SESSION['user_id'] = $user['register_number'];
                                 $_SESSION['role'] = $user['role'];
-                                header("Location: dashboard.php");
+                        
+                                // Redirect based on role
+                                if ($user['role'] === 'admin') {
+                                    header("Location: dashboard.php"); // Admin dashboard
+                                } elseif ($user['role'] === 'student') {
+                                    header("Location: student_dashboard.php"); // Student dashboard
+                                } elseif ($user['role'] === 'faculty') {
+                                    header("Location: faculty_dashboard.php"); // Faculty dashboard
+                                } else {
+                                    echo "Invalid role.";
+                                }
                                 exit;
                             } else {
                                 echo "Invalid password.";
@@ -57,6 +67,7 @@
                             echo "No user found with this email.";
                         }
                         $conn->close();
+                        
                     }
                     ?>
                 </div>
