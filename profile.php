@@ -93,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['change_password'])) {
         </div>
 
         <!-- Update Profile Form -->
-        <form method="post" action="">
+        <!-- <form method="post" action="">
             <h5>Update Profile</h5>
             <div class="mb-3">
                 <label for="name" class="form-label">Name</label>
@@ -104,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['change_password'])) {
                 <input type="email" class="form-control" id="email" name="email" value="<?php echo $user['email']; ?>" required>
             </div>
             <button type="submit" name="update_profile" class="btn btn-primary">Update Profile</button>
-        </form>
+        </form> -->
 
         <!-- Change Password Form -->
         <form method="post" action="" class="mt-4">

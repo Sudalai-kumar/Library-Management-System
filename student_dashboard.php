@@ -25,6 +25,12 @@ $sql_overdue = "SELECT b.title, bb.due_date
                 AND bb.due_date < CURDATE()";
 $result_overdue = $conn->query($sql_overdue);
 $overdue_books = $result_overdue->fetch_all(MYSQLI_ASSOC);
+// Fetch user's name
+$user_id = $_SESSION['user_id'];
+$sql = "SELECT name FROM users WHERE register_number = '$user_id'";
+$result = $conn->query($sql);
+$user = $result->fetch_assoc();
+
 
 // Optional: Fetch user-specific data like borrowed books
 $sql = "SELECT b.title, b.author, bb.borrow_date, bb.due_date, bb.return_date, 
@@ -54,8 +60,7 @@ $borrowed_books = $result->fetch_all(MYSQLI_ASSOC);
 
 <body class="bg-light">
     <div class="container my-5">
-        <h2 class="text-center mb-4">Welcome to the Library Management System, <?php echo $role; ?></h2>
-
+        <h2 class="text-center mb-4">Welcome to the Library Management System, <?php echo htmlspecialchars($user['name']); ?>!</h2>
         <!-- Navigation Links -->
         <nav class="nav justify-content-center mb-4">
             <!-- <a class="nav-link" href="view_borrowed_books.php">View Borrowed Books</a> -->

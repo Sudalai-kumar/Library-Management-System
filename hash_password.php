@@ -1,6 +1,6 @@
 <?php
 // Define your password
-$password = "satlas";
+$password = "faculty123";
 
 // Hash the password
 $hashed_password = password_hash($password, PASSWORD_DEFAULT);

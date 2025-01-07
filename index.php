@@ -12,9 +12,6 @@
         box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Add a shadow */
     }
 </style>
-
-
-
 </head>
 <body class="bg-light">
     <div class="container d-flex justify-content-center align-items-center vh-100">
