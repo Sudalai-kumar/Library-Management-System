@@ -17,12 +17,13 @@ if ($conn->connect_error) {
 // Fetch user details
 $user_id = $_SESSION['user_id'];
 $role = ucfirst($_SESSION['role']);
-$sql_overdue = "SELECT b.title, bb.due_date 
-                FROM borrowed_books bb
-                JOIN books b ON bb.book_id = b.id
-                WHERE bb.student_id = '$user_id' 
-                AND bb.return_date IS NULL 
-                AND bb.due_date < CURDATE()";
+$sql_overdue = "SELECT b.title, bb.due_date, CEIL(DATEDIFF(CURDATE(), bb.due_date) / 7) * 5 AS current_fine
+FROM borrowed_books bb
+JOIN books b ON bb.book_id = b.id
+WHERE bb.student_id = '$user_id' 
+AND bb.return_date IS NULL 
+AND bb.due_date < CURDATE()";
+
 $result_overdue = $conn->query($sql_overdue);
 $overdue_books = $result_overdue->fetch_all(MYSQLI_ASSOC);
 // Fetch user's name
@@ -33,16 +34,22 @@ $user = $result->fetch_assoc();
 
 
 // Optional: Fetch user-specific data like borrowed books
-$sql = "SELECT b.title, b.author, bb.borrow_date, bb.due_date, bb.return_date, 
-        CASE 
-            WHEN bb.return_date IS NOT NULL THEN 'Returned'
-            WHEN bb.due_date < CURDATE() THEN 'Overdue'
-            ELSE 'Currently Borrowed'
-        END AS status
-        FROM borrowed_books bb
-        JOIN books b ON bb.book_id = b.id
-        WHERE bb.student_id = '$user_id'
-        ORDER BY bb.borrow_date DESC";
+$sql = "SELECT b.title,b.author,bb.borrow_date,bb.due_date,bb.return_date, bb.fine,
+       CASE 
+           WHEN bb.return_date IS NOT NULL AND bb.fine > 0 THEN 'Returned with Fine'
+           WHEN bb.return_date IS NOT NULL THEN 'Returned'
+           WHEN bb.due_date < CURDATE() THEN 'Overdue'
+           ELSE 'Currently Borrowed'
+       END AS status,
+       CASE 
+           WHEN bb.due_date < CURDATE() AND bb.return_date IS NULL 
+           THEN CEIL(DATEDIFF(CURDATE(), bb.due_date) / 7) * 5
+           ELSE 0
+       END AS current_fine
+FROM borrowed_books bb
+JOIN books b ON bb.book_id = b.id
+WHERE bb.student_id = '$user_id'
+ORDER BY bb.borrow_date DESC";
 $result = $conn->query($sql);
 $borrowed_books = $result->fetch_all(MYSQLI_ASSOC);
 
@@ -55,7 +62,7 @@ $borrowed_books = $result->fetch_all(MYSQLI_ASSOC);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $role; ?> Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="bootstrap-5.3.3-dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
 <body class="bg-light">
@@ -68,6 +75,7 @@ $borrowed_books = $result->fetch_all(MYSQLI_ASSOC);
             <a class="nav-link" href="profile.php">Profile</a>
             <a class="nav-link text-danger" href="logout.php">Logout</a>
         </nav>
+        <!-- Overdue Notifications -->
         <div class="card shadow mb-4">
             <div class="card-header bg-danger text-white">
                 <h5>Overdue Notifications</h5>
@@ -79,6 +87,8 @@ $borrowed_books = $result->fetch_all(MYSQLI_ASSOC);
                             <li>
                                 <strong><?php echo $book['title']; ?></strong> was due on
                                 <span class="text-danger"><?php echo $book['due_date']; ?></span>.
+                                Current fine:
+                                <span class="text-danger">₹<?php echo number_format($book['current_fine'], 2); ?></span>
                             </li>
                         <?php endforeach; ?>
                     </ul>
@@ -103,18 +113,30 @@ $borrowed_books = $result->fetch_all(MYSQLI_ASSOC);
                                 <th>Due Date</th>
                                 <th>Return Date</th>
                                 <th>Status</th>
+                                <th>Fine</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($borrowed_books as $book): ?>
                                 <tr class="<?php
-                                            echo $book['status'] === 'Returned' ? 'table-success' : ($book['status'] === 'Overdue' ? 'table-danger' : 'table-warning'); ?>">
+                                            echo $book['status'] === 'Returned with Fine' ? 'table-warning' : ($book['status'] === 'Overdue' ? 'table-danger' : ($book['status'] === 'Returned' ? 'table-success' : 'table-primary')); ?>">
                                     <td><?php echo $book['title']; ?></td>
                                     <td><?php echo $book['author']; ?></td>
                                     <td><?php echo $book['borrow_date']; ?></td>
                                     <td><?php echo $book['due_date']; ?></td>
                                     <td><?php echo $book['return_date'] ?? 'N/A'; ?></td>
                                     <td><?php echo $book['status']; ?></td>
+                                    <td>
+                                        <?php
+                                        if ($book['status'] === 'Returned with Fine') {
+                                            echo "₹" . number_format($book['fine'], 2);
+                                        } elseif ($book['status'] === 'Overdue') {
+                                            echo "₹" . number_format($book['current_fine'], 2);
+                                        } else {
+                                            echo '-';
+                                        }
+                                        ?>
+                                    </td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>

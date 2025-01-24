@@ -1,7 +1,8 @@
 <?php include 'header.php'; ?>
 <?php
-session_start();
-
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 // Redirect to login if not logged in
 if (!isset($_SESSION['user_id'])) {
     header("Location: index.php");
@@ -33,6 +34,16 @@ $overdue_books = $conn->query($sql_overdue_books)->fetch_assoc()['overdue_books'
 
 $sql_total_fines = "SELECT SUM(fine) AS total_fines FROM borrowed_books WHERE return_date IS NOT NULL";
 $total_fines = $conn->query($sql_total_fines)->fetch_assoc()['total_fines'];
+// $sql_reservations = "
+//     SELECT r.id, b.title, u.name AS reserved_by, r.reservation_date, r.expiration_date
+//     FROM reservations r
+//     JOIN books b ON r.book_id = b.id
+//     JOIN users u ON r.student_id = u.register_number
+//     WHERE r.status = 'pending'
+//     ORDER BY r.reservation_date ASC";
+// $result_reservations = $conn->query($sql_reservations);
+// $reservations = $result_reservations->fetch_all(MYSQLI_ASSOC);
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -41,7 +52,7 @@ $total_fines = $conn->query($sql_total_fines)->fetch_assoc()['total_fines'];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Library Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="bootstrap-5.3.3-dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
 <body>
@@ -51,46 +62,53 @@ $total_fines = $conn->query($sql_total_fines)->fetch_assoc()['total_fines'];
         <p class="text-center">Role: <strong><?php echo ucfirst($role); ?></strong></p>
 
         <!-- Dashboard Metrics -->
-        <div class="row text-center">
-            <div class="col-md-3 mb-3">
-                <div class="card text-white bg-primary shadow">
-                    <div class="card-body">
-                        <h5 class="card-title">Total Books</h5>
-                        <p class="card-text fs-3"><?php echo $total_books; ?></p>
+        <div class="row">
+            <!-- Total Books -->
+            <div class="col-md-3">
+                <a href="manage_books.php" class="text-decoration-none">
+                    <div class="card text-white bg-primary mb-3 d-flex justify-content-center align-items-center">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Total Books</h5>
+                            <p class="card-text fs-3"><?php echo $active_books; ?></p>
+                        </div>
                     </div>
-                </div>
+                </a>
             </div>
-            <div class="col-md-3 mb-3">
-                <div class="card text-white bg-success shadow">
-                    <div class="card-body">
-                        <h5 class="card-title">Active Books</h5>
-                        <p class="card-text fs-3"><?php echo $active_books; ?></p>
+
+            <!-- Borrowed Books -->
+            <div class="col-md-3">
+                <a href="view_borrowed_books.php" class="text-decoration-none">
+                    <div class="card text-white bg-warning mb-3 d-flex justify-content-center align-items-center">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Borrowed Books</h5>
+                            <p class="card-text fs-3"><?php echo $borrowed_books; ?></p>
+                        </div>
                     </div>
-                </div>
+                </a>
             </div>
-            <div class="col-md-3 mb-3">
-                <div class="card text-white bg-warning shadow">
-                    <div class="card-body">
-                        <h5 class="card-title">Borrowed Books</h5>
-                        <p class="card-text fs-3"><?php echo $borrowed_books; ?></p>
+
+            <!-- Overdue Books -->
+            <div class="col-md-3">
+                <a href="overdue_books.php" class="text-decoration-none">
+                    <div class="card text-white bg-danger mb-3 d-flex justify-content-center align-items-center">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Overdue Books</h5>
+                            <p class="card-text fs-3"><?php echo $overdue_books; ?></p>
+                        </div>
                     </div>
-                </div>
+                </a>
             </div>
-            <div class="col-md-3 mb-3">
-                <div class="card text-white bg-danger shadow">
-                    <div class="card-body">
-                        <h5 class="card-title">Overdue Books</h5>
-                        <p class="card-text fs-3"><?php echo $overdue_books; ?></p>
+
+            <!-- Total Fines -->
+            <div class="col-md-3">
+                <a href="view_fines.php" class="text-decoration-none">
+                    <div class="card text-white bg-info mb-3 d-flex justify-content-center align-items-center">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Total Fines Collected</h5>
+                            <p class="card-text fs-3">₹<?php echo number_format($total_fines, 2); ?></p>
+                        </div>
                     </div>
-                </div>
-            </div>
-            <div class="col-md-3 mb-3">
-                <div class="card text-white bg-info shadow">
-                    <div class="card-body">
-                        <h5 class="card-title">Total Fines Collected</h5>
-                        <p class="card-text fs-3">₹<?php echo number_format($total_fines, 2); ?></p>
-                    </div>
-                </div>
+                </a>
             </div>
         </div>
         <!-- Admin Quick Actions -->

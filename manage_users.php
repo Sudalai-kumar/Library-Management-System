@@ -18,6 +18,11 @@ if ($conn->connect_error) {
 // Initialize message
 $message = "";
 
+// Pagination setup
+$results_per_page = 10; // Number of users per page
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1; // Current page
+$offset = ($page - 1) * $results_per_page; // Calculate offset
+
 // Handle adding a new user
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_user'])) {
     $name = $_POST['name'];
@@ -26,8 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_user'])) {
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
     $register_number = $_POST['register_number'];
     $sql = "INSERT INTO users (name, email, register_number, role, password) 
-        VALUES ('$name', '$email', '$register_number', '$role', '$password')";
-
+            VALUES ('$name', '$email', '$register_number', '$role', '$password')";
     $message = $conn->query($sql) ? "User added successfully!" : "Error: " . $conn->error;
 }
 
@@ -48,11 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['import_users'])) {
 
             foreach ($sheetData as $index => $row) {
                 if ($index == 0) continue; // Skip header row
-
-                // Skip rows with missing required fields
-                if (empty($row[0]) || empty($row[1]) || empty($row[2]) || empty($row[3])) {
-                    continue;
-                }
+                if (empty($row[0]) || empty($row[1]) || empty($row[2]) || empty($row[3])) continue; // Skip incomplete rows
 
                 // Extract and sanitize row data
                 $register_number = $conn->real_escape_string($row[0]);
@@ -77,14 +77,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['import_users'])) {
 // Handle deleting a user
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_user'])) {
     $user_id = $_POST['user_id'];
-    $sql = "DELETE FROM users WHERE id = '$user_id'";
+    $sql = "DELETE FROM users WHERE register_number = '$user_id'";
     $message = $conn->query($sql) ? "User deleted successfully!" : "Error: " . $conn->error;
 }
 
-// Fetch all users
-$sql = "SELECT * FROM users";
+// Fetch users with pagination
+$sql = "SELECT * FROM users LIMIT $results_per_page OFFSET $offset";
 $result = $conn->query($sql);
 $users = $result->fetch_all(MYSQLI_ASSOC);
+
+// Fetch total user count for pagination
+$sql_total = "SELECT COUNT(*) AS total FROM users";
+$result_total = $conn->query($sql_total);
+$total_users = $result_total->fetch_assoc()['total'];
+$total_pages = ceil($total_users / $results_per_page);
 ?>
 
 <!DOCTYPE html>
@@ -94,7 +100,7 @@ $users = $result->fetch_all(MYSQLI_ASSOC);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Users</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="bootstrap-5.3.3-dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
 <body class="bg-light">
@@ -137,20 +143,20 @@ $users = $result->fetch_all(MYSQLI_ASSOC);
 
         <!-- Import Users -->
         <h3>Import Users</h3>
-        <form method="post" action="" enctype="multipart/form-data">
-            <h5>Import Users</h5>
-            <label>Select Role:</label>
+        <form method="post" action="" enctype="multipart/form-data" class="mb-4">
             <div>
+                <label>Select Role:</label>
                 <input type="radio" id="student" name="role" value="student" required>
                 <label for="student">Student</label>
                 <input type="radio" id="faculty" name="role" value="faculty" required>
                 <label for="faculty">Faculty</label>
             </div>
-            <div class="mt-3">
-                <input type="file" name="excel_file" accept=".xlsx, .xls" required>
+            <div class="input-group mt-2">
+                <input type="file" name="excel_file" class="form-control" accept=".xlsx, .xls" required>
                 <button type="submit" name="import_users" class="btn btn-success">Import Users</button>
             </div>
         </form>
+
         <!-- Current Users -->
         <h3>All Users</h3>
         <table class="table table-bordered table-hover">
@@ -180,12 +186,26 @@ $users = $result->fetch_all(MYSQLI_ASSOC);
                 <?php endforeach; ?>
             </tbody>
         </table>
+
+        <!-- Pagination -->
+        <nav>
+            <ul class="pagination justify-content-center">
+                <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                    <li class="page-item <?php if ($i === $page) echo 'active'; ?>">
+                        <a class="page-link" href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
+                    </li>
+                <?php endfor; ?>
+            </ul>
+        </nav>
+
+        <!-- Export Users -->
         <div class="text-end mb-3">
             <form method="get" action="export.php">
                 <input type="hidden" name="type" value="users">
                 <button type="submit" class="btn btn-success">Export Users</button>
             </form>
         </div>
+
         <div class="text-center mt-4">
             <a href="dashboard.php" class="btn btn-secondary">Back to Dashboard</a>
         </div>

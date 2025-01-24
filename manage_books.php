@@ -18,6 +18,11 @@ if ($conn->connect_error) {
 // Initialize message
 $message = "";
 
+// Pagination setup
+$results_per_page = 10; // Number of books per page
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1; // Current page
+$offset = ($page - 1) * $results_per_page; // Calculate offset
+
 // Handle Add Book
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_book'])) {
     $title = $_POST['title'];
@@ -63,13 +68,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_book'])) {
     $message = $conn->query($sql) ? "Book marked as removed." : "Error: " . $conn->error;
 }
 
-// Fetch Books
-$books = [];
-$sql = "SELECT * FROM books WHERE is_removed = 0";
+// Fetch Books with pagination
+$sql = "SELECT * FROM books WHERE is_removed = 0 LIMIT $results_per_page OFFSET $offset";
 $result = $conn->query($sql);
-if ($result->num_rows > 0) {
-    $books = $result->fetch_all(MYSQLI_ASSOC);
-}
+$books = $result->fetch_all(MYSQLI_ASSOC);
+
+// Fetch total book count for pagination
+$sql_total = "SELECT COUNT(*) AS total FROM books WHERE is_removed = 0";
+$result_total = $conn->query($sql_total);
+$total_books = $result_total->fetch_assoc()['total'];
+$total_pages = ceil($total_books / $results_per_page);
 ?>
 
 <!DOCTYPE html>
@@ -79,7 +87,7 @@ if ($result->num_rows > 0) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Books</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="bootstrap-5.3.3-dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
 <body class="bg-light">
@@ -151,12 +159,26 @@ if ($result->num_rows > 0) {
                 <?php endforeach; ?>
             </tbody>
         </table>
+
+        <!-- Pagination -->
+        <nav>
+            <ul class="pagination justify-content-center">
+                <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                    <li class="page-item <?php if ($i === $page) echo 'active'; ?>">
+                        <a class="page-link" href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
+                    </li>
+                <?php endfor; ?>
+            </ul>
+        </nav>
+
+        <!-- Export Books -->
         <div class="text-end mb-3">
             <form method="get" action="export.php">
                 <input type="hidden" name="type" value="books">
                 <button type="submit" class="btn btn-success">Export Books</button>
             </form>
         </div>
+
         <div class="text-center mt-4">
             <a href="dashboard.php" class="btn btn-secondary">Back to Dashboard</a>
         </div>
