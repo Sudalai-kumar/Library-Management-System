@@ -13,6 +13,7 @@ $conn = new mysqli('localhost', 'root', '', 'library_management_system');
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
+$role = ucfirst($_SESSION['role']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -21,20 +22,44 @@ if ($conn->connect_error) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Search Books</title>
-    <link href="bootstrap-5.3.3-dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="bootstrap.min.css" rel="stylesheet">
     <script src="jquery-3.6.0.min.js"></script>
+    <style>
+        /* Sticky Search Bar */
+        .sticky-search {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background-color: #fff;
+            padding: 10px 0;
+            border-bottom: 2px solid #ddd;
+        }
+
+        /* Responsive Table */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        /* Pagination Styling */
+        .pagination-btn {
+            min-width: 40px;
+            text-align: center;
+        }
+    </style>
 </head>
 
 <body>
-    <!-- Search Section -->
     <div class="container my-5">
-        <h2>Search Books</h2>
-        <div class="input-group mb-3">
-            <input type="text" id="searchInput" class="form-control" placeholder="Start typing to search...">
+        <!-- Sticky Search Section -->
+        <div class="sticky-search">
+            <h2>Search Books</h2>
+            <div class="input-group mb-3">
+                <input type="text" id="searchInput" class="form-control" placeholder="Start typing to search...">
+            </div>
         </div>
 
-        <!-- Results Table -->
-        <div id="searchResults" class="mt-4">
+        <!-- Results Section -->
+        <div id="searchResults" class="table-responsive mt-4">
             <table class="table table-bordered">
                 <thead>
                     <tr>
@@ -55,6 +80,7 @@ if ($conn->connect_error) {
         <div id="pagination" class="d-flex justify-content-center mt-3">
             <!-- Pagination buttons will be dynamically generated here -->
         </div>
+
         <!-- Back to Dashboard -->
         <div class="text-center mt-4">
             <a href="dashboard.php" class="btn btn-secondary">Back to Dashboard</a>
@@ -63,7 +89,7 @@ if ($conn->connect_error) {
 
     <!-- AJAX Script -->
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             function fetchResults(query = '', page = 1) {
                 $.ajax({
                     url: 'search_books_ajax.php',
@@ -72,7 +98,7 @@ if ($conn->connect_error) {
                         search_query: query,
                         page: page
                     },
-                    success: function(response) {
+                    success: function (response) {
                         // Populate Results
                         let resultsHTML = '';
                         response.books.forEach(book => {
@@ -100,7 +126,7 @@ if ($conn->connect_error) {
                         $('#pagination').html(paginationHTML);
 
                         // Add click event to pagination buttons
-                        $('.pagination-btn').on('click', function() {
+                        $('.pagination-btn').on('click', function () {
                             const page = $(this).data('page');
                             fetchResults(query, page);
                         });
@@ -109,7 +135,7 @@ if ($conn->connect_error) {
             }
 
             // Trigger search on typing
-            $('#searchInput').on('input', function() {
+            $('#searchInput').on('input', function () {
                 const query = $(this).val();
                 fetchResults(query);
             });
@@ -121,5 +147,4 @@ if ($conn->connect_error) {
 </body>
 
 </html>
-
 <?php include 'footer.php'; ?>

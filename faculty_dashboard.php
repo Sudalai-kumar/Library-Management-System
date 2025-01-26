@@ -13,46 +13,59 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-
 // Fetch user details
 $user_id = $_SESSION['user_id'];
 $role = ucfirst($_SESSION['role']);
-$sql_overdue = "SELECT b.title, bb.due_date, CEIL(DATEDIFF(CURDATE(), bb.due_date) / 7) * 0 AS current_fine
-FROM borrowed_books bb
-JOIN books b ON bb.book_id = b.id
-WHERE bb.student_id = '$user_id' 
-AND bb.return_date IS NULL 
-AND bb.due_date < CURDATE()";
 
+// Fetch overdue books
+$sql_overdue = "
+    SELECT b.title, bb.due_date
+    FROM borrowed_books bb
+    JOIN books b ON bb.book_id = b.id
+    WHERE bb.student_id = '$user_id' 
+    AND bb.return_date IS NULL 
+    AND bb.due_date < CURDATE()
+";
 $result_overdue = $conn->query($sql_overdue);
 $overdue_books = $result_overdue->fetch_all(MYSQLI_ASSOC);
+
 // Fetch user's name
-$user_id = $_SESSION['user_id'];
 $sql = "SELECT name FROM users WHERE register_number = '$user_id'";
 $result = $conn->query($sql);
 $user = $result->fetch_assoc();
 
+// Pagination setup
+$results_per_page = 5;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$offset = ($page - 1) * $results_per_page;
 
-// Optional: Fetch user-specific data like borrowed books
-$sql = "SELECT b.title,b.author,bb.borrow_date,bb.due_date,bb.return_date, bb.fine,
-       CASE 
-           WHEN bb.return_date IS NOT NULL AND bb.fine > 0 THEN 'Returned with Fine'
-           WHEN bb.return_date IS NOT NULL THEN 'Returned'
-           WHEN bb.due_date < CURDATE() THEN 'Overdue'
-           ELSE 'Currently Borrowed'
-       END AS status,
-       CASE 
-           WHEN bb.due_date < CURDATE() AND bb.return_date IS NULL 
-           THEN CEIL(DATEDIFF(CURDATE(), bb.due_date) / 7) * 0
-           ELSE 0
-       END AS current_fine
-FROM borrowed_books bb
-JOIN books b ON bb.book_id = b.id
-WHERE bb.student_id = '$user_id'
-ORDER BY bb.borrow_date DESC";
+// Fetch borrowed books with pagination
+$sql = "
+    SELECT b.title, b.author, bb.borrow_date, bb.due_date, bb.return_date, bb.fine,
+           CASE 
+               WHEN bb.return_date IS NOT NULL AND bb.fine > 0 THEN 'Returned with Fine'
+               WHEN bb.return_date IS NOT NULL THEN 'Returned'
+               WHEN bb.due_date < CURDATE() THEN 'Overdue'
+               ELSE 'Currently Borrowed'
+           END AS status
+    FROM borrowed_books bb
+    JOIN books b ON bb.book_id = b.id
+    WHERE bb.student_id = '$user_id'
+    ORDER BY bb.borrow_date DESC
+    LIMIT $results_per_page OFFSET $offset
+";
 $result = $conn->query($sql);
 $borrowed_books = $result->fetch_all(MYSQLI_ASSOC);
 
+// Fetch total books for pagination
+$sql_total = "
+    SELECT COUNT(*) AS total 
+    FROM borrowed_books bb
+    WHERE bb.student_id = '$user_id'
+";
+$result_total = $conn->query($sql_total);
+$total_books = $result_total->fetch_assoc()['total'];
+$total_pages = ceil($total_books / $results_per_page);
 ?>
 
 <!DOCTYPE html>
@@ -62,7 +75,13 @@ $borrowed_books = $result->fetch_all(MYSQLI_ASSOC);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $role; ?> Dashboard</title>
-    <link href="bootstrap-5.3.3-dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="bootstrap.min.css" rel="stylesheet">
+    <style>
+        .table-responsive {
+            max-height: 500px; /* Optional: Add a height limit */
+            overflow-y: auto;
+        }
+    </style>
 </head>
 
 <body class="bg-light">
@@ -70,7 +89,6 @@ $borrowed_books = $result->fetch_all(MYSQLI_ASSOC);
         <h2 class="text-center mb-4">Welcome to the Library Management System, <?php echo htmlspecialchars($user['name']); ?>!</h2>
         <!-- Navigation Links -->
         <nav class="nav justify-content-center mb-4">
-            <!-- <a class="nav-link" href="view_borrowed_books.php">View Borrowed Books</a> -->
             <a class="nav-link" href="search_books.php">Search Books</a>
             <a class="nav-link" href="profile.php">Profile</a>
             <a class="nav-link text-danger" href="logout.php">Logout</a>
@@ -87,8 +105,6 @@ $borrowed_books = $result->fetch_all(MYSQLI_ASSOC);
                             <li>
                                 <strong><?php echo $book['title']; ?></strong> was due on
                                 <span class="text-danger"><?php echo $book['due_date']; ?></span>.
-                                Current fine:
-                                <span class="text-danger">₹<?php echo number_format($book['current_fine'], 2); ?></span>
                             </li>
                         <?php endforeach; ?>
                     </ul>
@@ -103,49 +119,67 @@ $borrowed_books = $result->fetch_all(MYSQLI_ASSOC);
                 <h5>Borrowed Books</h5>
             </div>
             <div class="card-body">
+                <!-- Search Bar -->
+                <div class="input-group mb-3">
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search borrowed books...">
+                </div>
                 <?php if (!empty($borrowed_books)): ?>
-                    <table class="table table-bordered table-hover">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Title</th>
-                                <th>Author</th>
-                                <th>Borrow Date</th>
-                                <th>Due Date</th>
-                                <th>Return Date</th>
-                                <th>Status</th>
-                                <th>Fine</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($borrowed_books as $book): ?>
-                                <tr class="<?php echo $book['status'] === 'Returned with Fine' ? 'table-warning' : ($book['status'] === 'Overdue' ? 'table-danger' : ($book['status'] === 'Returned' ? 'table-success' : 'table-primary')); ?>">
-                                    <td><?php echo $book['title']; ?></td>
-                                    <td><?php echo $book['author']; ?></td>
-                                    <td><?php echo $book['borrow_date']; ?></td>
-                                    <td><?php echo $book['due_date']; ?></td>
-                                    <td><?php echo $book['return_date'] ?? 'N/A'; ?></td>
-                                    <td><?php echo $book['status']; ?></td>
-                                    <td>
-                                        <?php
-                                        if ($book['status'] === 'Returned with Fine') {
-                                            echo "₹" . number_format($book['fine'], 2);
-                                        } elseif ($book['status'] === 'Overdue') {
-                                            echo "₹" . number_format($book['current_fine'], 2);
-                                        } else {
-                                            echo '-';
-                                        }
-                                        ?>
-                                    </td>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Author</th>
+                                    <th>Borrow Date</th>
+                                    <th>Due Date</th>
+                                    <th>Return Date</th>
+                                    <th>Status</th>
+                                    <th>Fine</th>
                                 </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($borrowed_books as $book): ?>
+                                    <tr class="<?php echo $book['status'] === 'Returned with Fine' ? 'table-warning' : ($book['status'] === 'Overdue' ? 'table-danger' : ($book['status'] === 'Returned' ? 'table-success' : 'table-primary')); ?>">
+                                        <td><?php echo $book['title']; ?></td>
+                                        <td><?php echo $book['author']; ?></td>
+                                        <td><?php echo $book['borrow_date']; ?></td>
+                                        <td><?php echo $book['due_date']; ?></td>
+                                        <td><?php echo $book['return_date'] ?? 'N/A'; ?></td>
+                                        <td><?php echo $book['status']; ?></td>
+                                        <td><?php echo $book['fine'] > 0 ? "₹" . number_format($book['fine'], 2) : '-'; ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Pagination -->
+                    <nav>
+                        <ul class="pagination justify-content-center">
+                            <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                                <li class="page-item <?php if ($i === $page) echo 'active'; ?>">
+                                    <a class="page-link" href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
+                                </li>
+                            <?php endfor; ?>
+                        </ul>
+                    </nav>
                 <?php else: ?>
                     <p class="text-muted">No books borrowed yet.</p>
                 <?php endif; ?>
             </div>
         </div>
     </div>
+    <script>
+        $(document).ready(function () {
+            // Filter table rows based on search input
+            $("#searchInput").on("input", function () {
+                const query = $(this).val().toLowerCase();
+                $("tbody tr").each(function () {
+                    const rowText = $(this).text().toLowerCase();
+                    $(this).toggle(rowText.includes(query));
+                });
+            });
+        });
+    </script>
 </body>
 
 </html>

@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['import_books'])) {
             $spreadsheet = IOFactory::load($file);
             $sheetData = $spreadsheet->getActiveSheet()->toArray();
             foreach ($sheetData as $index => $row) {
-                if ($index == 0 || empty($row[0]) || empty($row[1]) || empty($row[3])) continue; // Skip headers or incomplete rows
+                if ($index == 0 || empty($row[0]) || empty($row[1]) || empty($row[3])) continue;
                 $title = $conn->real_escape_string($row[0]);
                 $author = $conn->real_escape_string($row[1]);
                 $genre = isset($row[2]) ? $conn->real_escape_string($row[2]) : "";
@@ -87,7 +87,19 @@ $total_pages = ceil($total_books / $results_per_page);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Books</title>
-    <link href="bootstrap-5.3.3-dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="bootstrap.min.css" rel="stylesheet">
+    <script src="jquery-3.6.0.min.js"></script>
+    <style>
+        .table-responsive {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .pagination-btn {
+            min-width: 40px;
+            text-align: center;
+        }
+    </style>
 </head>
 
 <body class="bg-light">
@@ -100,29 +112,25 @@ $total_pages = ceil($total_books / $results_per_page);
         <?php endif; ?>
 
         <!-- Add Book -->
-        <h3>Add a New Book:</h3>
-        <form method="post" action="" class="mb-4">
-            <div class="row g-2">
-                <div class="col-md-3">
-                    <input type="text" name="title" class="form-control" placeholder="Title" required>
-                </div>
-                <div class="col-md-3">
-                    <input type="text" name="author" class="form-control" placeholder="Author" required>
-                </div>
-                <div class="col-md-3">
-                    <input type="text" name="genre" class="form-control" placeholder="Genre">
-                </div>
-                <div class="col-md-3">
-                    <input type="text" name="barcode" class="form-control" placeholder="Barcode" required>
-                </div>
-                <div class="col-md-12 text-end mt-2">
-                    <button type="submit" name="add_book" class="btn btn-primary">Add Book</button>
-                </div>
+        <form method="post" action="" class="row g-2 mb-4">
+            <div class="col-md-3">
+                <input type="text" name="title" class="form-control" placeholder="Title" required>
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="author" class="form-control" placeholder="Author" required>
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="genre" class="form-control" placeholder="Genre">
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="barcode" class="form-control" placeholder="Barcode" required>
+            </div>
+            <div class="col-md-12 text-end mt-2">
+                <button type="submit" name="add_book" class="btn btn-primary">Add Book</button>
             </div>
         </form>
 
         <!-- Import Books -->
-        <h3>Import Books:</h3>
         <form method="post" action="" enctype="multipart/form-data" class="mb-4">
             <div class="input-group">
                 <input type="file" name="excel_file" class="form-control" accept=".xlsx, .xls" required>
@@ -130,42 +138,48 @@ $total_pages = ceil($total_books / $results_per_page);
             </div>
         </form>
 
+        <!-- Search Bar -->
+        <div class="input-group mb-3">
+            <input type="text" id="searchInput" class="form-control" placeholder="Search books...">
+        </div>
+
         <!-- Current Books -->
-        <h3>Current Books:</h3>
-        <table class="table table-bordered table-hover">
-            <thead class="table-light">
-                <tr>
-                    <th>Title</th>
-                    <th>Author</th>
-                    <th>Genre</th>
-                    <th>Barcode</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($books as $book): ?>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead class="table-light">
                     <tr>
-                        <td><?php echo $book['title']; ?></td>
-                        <td><?php echo $book['author']; ?></td>
-                        <td><?php echo $book['genre']; ?></td>
-                        <td><?php echo $book['barcode']; ?></td>
-                        <td>
-                            <form method="post" action="" class="d-inline">
-                                <input type="hidden" name="book_id" value="<?php echo $book['id']; ?>">
-                                <button type="submit" name="delete_book" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?');">Delete</button>
-                            </form>
-                        </td>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>Genre</th>
+                        <th>Barcode</th>
+                        <th>Actions</th>
                     </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    <?php foreach ($books as $book): ?>
+                        <tr>
+                            <td><?php echo $book['title']; ?></td>
+                            <td><?php echo $book['author']; ?></td>
+                            <td><?php echo $book['genre']; ?></td>
+                            <td><?php echo $book['barcode']; ?></td>
+                            <td>
+                                <form method="post" action="" class="d-inline">
+                                    <input type="hidden" name="book_id" value="<?php echo $book['id']; ?>">
+                                    <button type="submit" name="delete_book" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?');">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
 
         <!-- Pagination -->
         <nav>
             <ul class="pagination justify-content-center">
                 <?php for ($i = 1; $i <= $total_pages; $i++): ?>
                     <li class="page-item <?php if ($i === $page) echo 'active'; ?>">
-                        <a class="page-link" href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
+                        <a class="page-link pagination-btn" href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
                     </li>
                 <?php endfor; ?>
             </ul>
@@ -183,6 +197,19 @@ $total_pages = ceil($total_books / $results_per_page);
             <a href="dashboard.php" class="btn btn-secondary">Back to Dashboard</a>
         </div>
     </div>
+
+    <script>
+        $(document).ready(function () {
+            // Filter table rows based on search input
+            $("#searchInput").on("input", function () {
+                const query = $(this).val().toLowerCase();
+                $("tbody tr").each(function () {
+                    const rowText = $(this).text().toLowerCase();
+                    $(this).toggle(rowText.includes(query));
+                });
+            });
+        });
+    </script>
 </body>
 
 </html>

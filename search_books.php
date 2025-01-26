@@ -21,20 +21,44 @@ $role = ucfirst($_SESSION['role']);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Search Books</title>
-    <link href="bootstrap-5.3.3-dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="bootstrap.min.css" rel="stylesheet">
     <script src="jquery-3.6.0.min.js"></script>
+    <style>
+        /* Sticky Search Bar */
+        .sticky-search {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background-color: #fff;
+            padding: 10px 0;
+            border-bottom: 2px solid #ddd;
+        }
+
+        /* Responsive Table */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        /* Pagination Styling */
+        .pagination-btn {
+            min-width: 40px;
+            text-align: center;
+        }
+    </style>
 </head>
 
 <body>
-    <!-- Search Section -->
     <div class="container my-5">
-        <h2>Search Books</h2>
-        <div class="input-group mb-3">
-            <input type="text" id="searchInput" class="form-control" placeholder="Start typing to search...">
+        <!-- Sticky Search Section -->
+        <div class="sticky-search">
+            <h2>Search Books</h2>
+            <div class="input-group mb-3">
+                <input type="text" id="searchInput" class="form-control" placeholder="Start typing to search...">
+            </div>
         </div>
 
-        <!-- Results Table -->
-        <div id="searchResults" class="mt-4">
+        <!-- Results Section -->
+        <div id="searchResults" class="table-responsive mt-4">
             <table class="table table-bordered">
                 <thead>
                     <tr>
@@ -55,6 +79,7 @@ $role = ucfirst($_SESSION['role']);
         <div id="pagination" class="d-flex justify-content-center mt-3">
             <!-- Pagination buttons will be dynamically generated here -->
         </div>
+
         <!-- Back to Dashboard -->
         <?php
         $dashboard_url = ($_SESSION['role'] === 'student') ? 'student_dashboard.php' : 'faculty_dashboard.php';

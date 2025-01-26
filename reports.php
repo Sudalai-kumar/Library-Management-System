@@ -61,8 +61,43 @@ $monthly_borrow_counts = json_encode(array_column($monthly_activity, 'borrow_cou
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Library Reports</title>
-    <link href="bootstrap-5.3.3-dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="bootstrap.min.css" rel="stylesheet">
     <script src="chart.js"></script>
+    <style>
+        .card {
+            height: 100%;
+        }
+
+        .card-header {
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+
+        .card-body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .chart-container {
+            height: 300px;
+        }
+
+        .list-group {
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        @media (min-width: 992px) {
+            .container {
+                max-width: 1200px;
+            }
+
+            .row.g-4 > div {
+                margin-bottom: 0;
+            }
+        }
+    </style>
 </head>
 
 <body class="bg-light">
@@ -70,13 +105,15 @@ $monthly_borrow_counts = json_encode(array_column($monthly_activity, 'borrow_cou
         <h2 class="text-center mb-4">Library Reports</h2>
         <div class="row g-4">
             <!-- Popular Books -->
-            <div class="col-md-6">
+            <div class="col-lg-6">
                 <div class="card shadow">
-                    <div class="card-header text-center bg-primary text-white">
+                    <div class="card-header bg-primary text-white text-center">
                         Popular Books
                     </div>
                     <div class="card-body">
-                        <canvas id="popularBooksChart" height="250"></canvas>
+                        <div class="chart-container">
+                            <canvas id="popularBooksChart"></canvas>
+                        </div>
                         <ul class="list-group mt-3">
                             <?php foreach ($popular_books as $book): ?>
                                 <li class="list-group-item">
@@ -85,24 +122,24 @@ $monthly_borrow_counts = json_encode(array_column($monthly_activity, 'borrow_cou
                                 </li>
                             <?php endforeach; ?>
                         </ul>
+                        <form method="get" action="export.php" class="text-center mt-3">
+                            <input type="hidden" name="type" value="reports_popular_books">
+                            <button type="submit" class="btn btn-success">Export Popular Books</button>
+                        </form>
                     </div>
                 </div>
             </div>
-            <div class="text-end mb-3">
-                <form method="get" action="export.php">
-                    <input type="hidden" name="type" value="reports_popular_books">
-                    <button type="submit" class="btn btn-success">Export Popular Books</button>
-                </form>
-            </div>
 
             <!-- Frequent Borrowers -->
-            <div class="col-md-6">
+            <div class="col-lg-6">
                 <div class="card shadow">
-                    <div class="card-header text-center bg-success text-white">
+                    <div class="card-header bg-success text-white text-center">
                         Frequent Borrowers
                     </div>
                     <div class="card-body">
-                        <canvas id="frequentBorrowersChart" height="250"></canvas>
+                        <div class="chart-container">
+                            <canvas id="frequentBorrowersChart"></canvas>
+                        </div>
                         <ul class="list-group mt-3">
                             <?php foreach ($frequent_borrowers as $borrower): ?>
                                 <li class="list-group-item">
@@ -112,24 +149,26 @@ $monthly_borrow_counts = json_encode(array_column($monthly_activity, 'borrow_cou
                                 </li>
                             <?php endforeach; ?>
                         </ul>
+                        <form method="get" action="export.php" class="text-center mt-3">
+                            <input type="hidden" name="type" value="reports_frequent_borrowers">
+                            <button type="submit" class="btn btn-success">Export Frequent Borrowers</button>
+                        </form>
                     </div>
                 </div>
             </div>
-            <div class="text-end mb-3">
-                <form method="get" action="export.php">
-                    <input type="hidden" name="type" value="reports_frequent_borrowers">
-                    <button type="submit" class="btn btn-success">Export Frequent Borrowers</button>
-                </form>
-            </div>
+        </div>
 
-            <!-- Monthly Activity -->
+        <!-- Monthly Activity -->
+        <div class="row mt-4">
             <div class="col-12">
                 <div class="card shadow">
-                    <div class="card-header text-center bg-warning text-dark">
+                    <div class="card-header bg-warning text-dark text-center">
                         Monthly Borrowing Activity
                     </div>
                     <div class="card-body">
-                        <canvas id="monthlyActivityChart" height="200"></canvas>
+                        <div class="chart-container">
+                            <canvas id="monthlyActivityChart"></canvas>
+                        </div>
                         <ul class="list-group mt-3">
                             <?php foreach ($monthly_activity as $activity): ?>
                                 <li class="list-group-item">
@@ -138,22 +177,18 @@ $monthly_borrow_counts = json_encode(array_column($monthly_activity, 'borrow_cou
                                 </li>
                             <?php endforeach; ?>
                         </ul>
+                        <form method="get" action="export.php" class="text-center mt-3">
+                            <input type="hidden" name="type" value="reports_monthly_activity">
+                            <button type="submit" class="btn btn-success">Export Monthly Activity</button>
+                        </form>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="text-end mb-3">
-            <form method="get" action="export.php">
-                <input type="hidden" name="type" value="reports_monthly_activity">
-                <button type="submit" class="btn btn-success">Export Monthly Activity</button>
-            </form>
+
+        <div class="text-center mt-5">
+            <a href="dashboard.php" class="btn btn-secondary">Back to Dashboard</a>
         </div>
-    </div>
-
-
-    <div class="text-center mt-5">
-        <a href="dashboard.php" class="btn btn-secondary">Back to Dashboard</a>
-    </div>
     </div>
 
     <!-- Chart.js Scripts -->
@@ -221,8 +256,6 @@ $monthly_borrow_counts = json_encode(array_column($monthly_activity, 'borrow_cou
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: true, // Ensure aspect ratio is maintained
-                aspectRatio: 2, // Adjust the width-to-height ratio
                 scales: {
                     y: {
                         beginAtZero: true
@@ -234,5 +267,6 @@ $monthly_borrow_counts = json_encode(array_column($monthly_activity, 'borrow_cou
 </body>
 
 </html>
+
 
 <?php include 'footer.php'; ?>
